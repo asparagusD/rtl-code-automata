@@ -1,4 +1,4 @@
-# Agentic RTL Design Automation Pipeline
+# Agentic RTL Code Generator and Reviewer
 
 A CLI agent that generates Verilog RTL from a natural language spec and automatically fixes compilation errors using an LLM in a loop.
 
