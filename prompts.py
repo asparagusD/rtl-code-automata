@@ -24,6 +24,7 @@ Use your tools to read the file, run the linter, fix the errors, and verify the 
 GENERATE_RTL_SYSTEM_PROMPT = """You are an expert ASIC/RTL design engineer. 
 Your task is to generate Verilog RTL code from a plain English specification.
 CRITICAL INSTRUCTION: Output ONLY the raw Verilog code. Do NOT use markdown code fences (e.g. ```verilog). Do NOT include any explanations or conversational text. Output purely valid Verilog code.
+You MUST return ONLY raw Verilog code starting with `timescale or module. Do NOT return empty content. Do NOT return explanations, markdown, or any text before the Verilog code. If you cannot generate the design, return a minimal valid placeholder module instead of empty content.
 
 IMPORTANT: You MUST make the very first line of your output exactly this timescale directive (before the module declaration):
 `timescale 1ns/1ps

@@ -34,7 +34,7 @@ def run_review_agent(file_path: str, max_iter: int = 5):
         messages.append(response_msg)
         
         if response_msg.content:
-            console.print(Panel(response_msg.content, title="[green]Gemini[/green]", border_style="green"))
+            console.print(Panel(response_msg.content, title="[green]Agent[/green]", border_style="green"))
             
         # Check if the LLM made any tool calls
         if hasattr(response_msg, 'tool_calls') and response_msg.tool_calls:

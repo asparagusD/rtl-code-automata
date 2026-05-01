@@ -132,7 +132,7 @@ def run_debug_agent(vcd_path: str, rtl_path: str, out_dir: str, max_iter: int = 
         messages.append(response_msg)
         
         if response_msg.content:
-            console.print(Panel(response_msg.content, title="[green]Gemini[/green]", border_style="green"))
+            console.print(Panel(response_msg.content, title="[green]Agent[/green]", border_style="green"))
             
         if hasattr(response_msg, 'tool_calls') and response_msg.tool_calls:
             for tool_call in response_msg.tool_calls:

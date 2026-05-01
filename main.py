@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import datetime
 from dotenv import load_dotenv
@@ -18,6 +19,30 @@ from prompts import (
 
 console = Console()
 
+def validate_verilog_output(content: str, spec: str) -> bool:
+    """Check if generated content is valid non-empty Verilog."""
+    if not content or len(content.strip()) < 50:
+        return False
+    if "module" not in content:
+        return False
+    return True
+
+def preflight_check(filepath: str) -> bool:
+    try:
+        with open(filepath, 'r', encoding="utf-8") as f:
+            content = f.read()
+        if len(content.strip()) < 50:
+            console.print(f"[red]✗ Pre-flight failed: {filepath} is empty or too short.[/red]")
+            return False
+        if "module" not in content:
+            console.print(f"[red]✗ Pre-flight failed: {filepath} contains no Verilog module.[/red]")
+            return False
+        console.print(f"[green]✓ Pre-flight passed: {filepath} looks valid.[/green]")
+        return True
+    except FileNotFoundError:
+        console.print(f"[red]✗ Pre-flight failed: {filepath} not found.[/red]")
+        return False
+
 def main():
     parser = argparse.ArgumentParser(description="Agentic RTL Design Automation Pipeline")
     parser.add_argument("--review", type=str, help="Path to the Verilog file to review and fix (Part 1)")
@@ -33,8 +58,8 @@ def main():
     
     args = parser.parse_args()
     
-    if not os.getenv("GOOGLE_API_KEY"):
-        console.print("[bold red]Error: GOOGLE_API_KEY environment variable not set.[/bold red]")
+    if not os.getenv("OPENROUTER_API_KEY"):
+        console.print("[bold red]Error: OPENROUTER_API_KEY environment variable not set.[/bold red]")
         console.print("Please set it in your .env file or environment.")
         return
 
@@ -54,28 +79,42 @@ def main():
         out_dir = os.path.join(args.output, timestamp)
         os.makedirs(out_dir, exist_ok=True)
         
-        # 2. Call Gemini for RTL
+        # 2. Call LLM for RTL
         console.print("[dim]Generating Verilog code...[/dim]")
         rtl_messages = [
             {"role": "system", "content": GENERATE_RTL_SYSTEM_PROMPT},
             {"role": "user", "content": GENERATE_RTL_USER_PROMPT.format(spec=args.spec)}
         ]
-        rtl_response = chat_completion(rtl_messages, max_tokens=8192)
-        rtl_code = (rtl_response.content or "").strip()
+        for attempt in range(3):
+            rtl_response = chat_completion(rtl_messages, max_tokens=8192)
+            rtl_code = (rtl_response.content or "").strip()
+            if validate_verilog_output(rtl_code, args.spec):
+                break
+            console.print(f"[yellow]⚠ Empty or invalid RTL generated (attempt {attempt+1}/3) — retrying...[/yellow]")
+        else:
+            console.print("[red]✗ Failed to generate valid RTL after 3 attempts. Aborting.[/red]")
+            sys.exit(1)
         
         rtl_file = os.path.join(out_dir, "design.v")
         with open(rtl_file, "w", encoding="utf-8") as f:
             f.write(rtl_code)
         console.print(f"[bold green]Saved generated RTL to {rtl_file}[/bold green]")
         
-        # 3. Call Gemini for Testbench
+        # 3. Call LLM for Testbench
         console.print("[dim]Generating Verilog testbench...[/dim]")
         tb_messages = [
             {"role": "system", "content": GENERATE_TB_SYSTEM_PROMPT},
             {"role": "user", "content": GENERATE_TB_USER_PROMPT.format(rtl_code=rtl_code)}
         ]
-        tb_response = chat_completion(tb_messages, max_tokens=8192)
-        tb_code = (tb_response.content or "").strip()
+        for attempt in range(3):
+            tb_response = chat_completion(tb_messages, max_tokens=8192)
+            tb_code = (tb_response.content or "").strip()
+            if validate_verilog_output(tb_code, rtl_code):
+                break
+            console.print(f"[yellow]⚠ Empty or invalid RTL generated (attempt {attempt+1}/3) — retrying...[/yellow]")
+        else:
+            console.print("[red]✗ Failed to generate valid RTL after 3 attempts. Aborting.[/red]")
+            sys.exit(1)
         
         tb_file = os.path.join(out_dir, "tb_design.v")
         with open(tb_file, "w", encoding="utf-8") as f:
@@ -84,6 +123,8 @@ def main():
         
         # 4. Pipe RTL into Part 1 review loop
         console.print("\n[bold magenta]Piping generated RTL into Code Review Agent...[/bold magenta]")
+        if not preflight_check(rtl_file):
+            sys.exit(1)
         run_review_agent(rtl_file, args.max_iter)
         
         # 5. Simulate if requested
