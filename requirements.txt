@@ -1,0 +1,6 @@
+openai==2.33.0
+rich==15.0.0
+loguru==0.7.3
+python-dotenv==1.2.2
+pyDigitalWaveTools==1.2
+cocotb==2.0.1

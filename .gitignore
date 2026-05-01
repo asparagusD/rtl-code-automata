@@ -1,28 +1,27 @@
-# Environments
+# API keys
 .env
+
+# Virtual environments
+.venv/
 venv/
-env/
-ENV/
 
-# Byte-compiled / optimized / DLL files
+# Generated outputs
+outputs/
+
+# Compiled iverilog intermediates
+*.vvp
+*.vcd
+
+# Python cache
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
+*.pyo
 
-# VS Code / IDEs
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
 .vscode/
 .idea/
 *.swp
-
-# cocotb / Simulation artifacts
-sim_build/
-*.vcd
-*.fst
-*.lxt
-*.fst
-results.xml
-
-# Python packaging / distribution
-build/
-dist/
-*.egg-info/
