@@ -51,7 +51,7 @@ def main():
     parser.add_argument("--debug", action="store_true", help="Debug waveform anomalies (Waveform Debugger Agent)")
     parser.add_argument("--vcd", type=str, help="Path to the VCD waveform file for --debug")
     parser.add_argument("--rtl", type=str, help="Path to the RTL source file for --debug")
-    parser.add_argument("--max-iter", type=int, default=8, help="Maximum iterations for the agent loop")
+    parser.add_argument("--max-iter", type=int, default=12, help="Maximum iterations for the agent loop (default: 12)")
     parser.add_argument("--output", type=str, default="outputs", help="Base directory for generated outputs (default: outputs/)")
     parser.add_argument("--simulate", action="store_true", help="Automatically compile and simulate generated RTL via WSL2")
     parser.add_argument("--dir", type=str, help="Output directory to simulate (when using standalone --simulate)")
@@ -86,10 +86,12 @@ def main():
             {"role": "user", "content": GENERATE_RTL_USER_PROMPT.format(spec=args.spec)}
         ]
         for attempt in range(3):
-            rtl_response = chat_completion(rtl_messages, max_tokens=8192)
+            rtl_response = chat_completion(rtl_messages, max_tokens=32000)
             rtl_code = (rtl_response.content or "").strip()
             if validate_verilog_output(rtl_code, args.spec):
                 break
+            console.print(f"[dim]Attempt {attempt+1} raw response ({len(rtl_code)} chars):[/dim]")
+            console.print(f"[dim]{rtl_code[:200]}[/dim]")
             console.print(f"[yellow]⚠ Empty or invalid RTL generated (attempt {attempt+1}/3) — retrying...[/yellow]")
         else:
             console.print("[red]✗ Failed to generate valid RTL after 3 attempts. Aborting.[/red]")
@@ -107,11 +109,13 @@ def main():
             {"role": "user", "content": GENERATE_TB_USER_PROMPT.format(rtl_code=rtl_code)}
         ]
         for attempt in range(3):
-            tb_response = chat_completion(tb_messages, max_tokens=8192)
+            tb_response = chat_completion(tb_messages, max_tokens=32000)
             tb_code = (tb_response.content or "").strip()
             if validate_verilog_output(tb_code, rtl_code):
                 break
-            console.print(f"[yellow]⚠ Empty or invalid RTL generated (attempt {attempt+1}/3) — retrying...[/yellow]")
+            console.print(f"[dim]Attempt {attempt+1} raw response ({len(tb_code)} chars):[/dim]")
+            console.print(f"[dim]{tb_code[:200]}[/dim]")
+            console.print(f"[yellow]⚠ Empty or invalid testbench generated (attempt {attempt+1}/3) — retrying...[/yellow]")
         else:
             console.print("[red]✗ Failed to generate valid RTL after 3 attempts. Aborting.[/red]")
             sys.exit(1)

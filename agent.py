@@ -9,7 +9,7 @@ from prompts import REVIEW_SYSTEM_PROMPT, REVIEW_USER_PROMPT
 
 console = Console()
 
-def run_review_agent(file_path: str, max_iter: int = 5):
+def run_review_agent(file_path: str, max_iter: int = 12):
     """
     Runs the LLM-driven review agent loop for the given file.
     """
@@ -76,7 +76,16 @@ def run_review_agent(file_path: str, max_iter: int = 5):
                     "content": str(result)
                 })
         else:
-            # If no tool calls and no more work needed, break
+            # If no tool calls made at all, force a review
+            if tool_calls_count == 0:
+                console.print("[yellow]⚠ Agent made no tool calls — forcing review[/yellow]")
+                messages.append({
+                    "role": "user",
+                    "content": "You must call read_file and run_iverilog before finishing. Please review the file now."
+                })
+                iteration += 1
+                continue
+            # If tool calls were made previously and no more needed, break
             console.print("[bold green]Agent has finished reviewing the file.[/bold green]")
             final_status = "Success (Clean)"
             break

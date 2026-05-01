@@ -31,7 +31,7 @@ def write_report(content: str, out_dir: str = None) -> str:
         f.write(content)
     return f"Report successfully saved to {report_path}"
 
-def run_debug_agent(vcd_path: str, rtl_path: str, out_dir: str, max_iter: int = 8):
+def run_debug_agent(vcd_path: str, rtl_path: str, out_dir: str, max_iter: int = 12):
     """
     Runs the LLM-driven debug agent loop.
     """
