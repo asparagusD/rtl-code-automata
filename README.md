@@ -1,6 +1,6 @@
 # Agentic RTL Design Automation Pipeline
 
-A two-part AI-driven agentic pipeline for RTL design and review, utilizing a resilient dual-provider LLM architecture.
+A CLI agent that generates Verilog RTL from a natural language spec and automatically fixes compilation errors using an LLM in a loop.
 
 ## Overview
 This tool automates Verilog code generation from plain English specifications and actively loops to review, lint, and fix Verilog code.
