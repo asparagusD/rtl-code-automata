@@ -1,0 +1,28 @@
+# Environments
+.env
+venv/
+env/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VS Code / IDEs
+.vscode/
+.idea/
+*.swp
+
+# cocotb / Simulation artifacts
+sim_build/
+*.vcd
+*.fst
+*.lxt
+*.fst
+results.xml
+
+# Python packaging / distribution
+build/
+dist/
+*.egg-info/
