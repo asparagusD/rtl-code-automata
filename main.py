@@ -1,33 +1,42 @@
 import os
+import argparse
 from dotenv import load_dotenv
-from openai import OpenAI
+from rich.console import Console
+
+# Load environment variables
+load_dotenv()
+
+from agent import run_review_agent
+
+console = Console()
 
 def main():
-    # Load environment variables from the .env file
-    load_dotenv()
-
-    # Get the Google API key
-    google_api_key = os.getenv("GOOGLE_API_KEY")
+    parser = argparse.ArgumentParser(description="Agentic RTL Design Automation Pipeline")
+    parser.add_argument("--review", type=str, help="Path to the Verilog file to review and fix (Part 1)")
+    parser.add_argument("--generate", action="store_true", help="Generate RTL from spec (Part 2)")
+    parser.add_argument("--spec", type=str, help="Plain English block description for generation (Part 2)")
+    parser.add_argument("--max-iter", type=int, default=5, help="Maximum iterations for the agent loop")
     
-    if not google_api_key or google_api_key == "your_key_here":
-        print("Please set your GOOGLE_API_KEY in the .env file!")
+    args = parser.parse_args()
+    
+    if not os.getenv("GOOGLE_API_KEY"):
+        console.print("[bold red]Error: GOOGLE_API_KEY environment variable not set.[/bold red]")
+        console.print("Please set it in your .env file or environment.")
         return
 
-    print("Environment loaded successfully. API Key is ready.")
-
-    # Example of setting up the OpenAI client to use Gemini's OpenAI-compatible API
-    # client = OpenAI(
-    #     api_key=google_api_key,
-    #     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-    # )
-    
-    # response = client.chat.completions.create(
-    #     model="gemini-2.5-flash",
-    #     messages=[
-    #         {"role": "user", "content": "Hello! Are you Gemini?"}
-    #     ]
-    # )
-    # print(response.choices[0].message.content)
+    if args.review:
+        if not os.path.exists(args.review):
+            console.print(f"[bold red]Error: File '{args.review}' not found.[/bold red]")
+            return
+        run_review_agent(args.review, args.max_iter)
+    elif args.generate:
+        if not args.spec:
+            console.print("[bold red]Error: --spec is required when using --generate.[/bold red]")
+            return
+        console.print("[bold yellow]Generation (Part 2) is not fully implemented yet.[/bold yellow]")
+        # Part 2 will be here later
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
     main()
