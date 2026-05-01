@@ -1,6 +1,7 @@
 import json
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 
 from llm import chat_completion
 from tools import TOOLS, TOOL_MAP
@@ -20,6 +21,8 @@ def run_review_agent(file_path: str, max_iter: int = 5):
     ]
     
     iteration = 1
+    tool_calls_count = 0
+    final_status = "Pending"
     
     while iteration <= max_iter:
         console.print(f"\n[bold yellow]--- Iteration {iteration} / {max_iter} ---[/bold yellow]")
@@ -36,6 +39,7 @@ def run_review_agent(file_path: str, max_iter: int = 5):
         # Check if the LLM made any tool calls
         if hasattr(response_msg, 'tool_calls') and response_msg.tool_calls:
             for tool_call in response_msg.tool_calls:
+                tool_calls_count += 1
                 fn_name = tool_call.function.name
                 args = json.loads(tool_call.function.arguments)
                 
@@ -56,7 +60,13 @@ def run_review_agent(file_path: str, max_iter: int = 5):
                 result_display = str(result)
                 if len(result_display) > 500:
                     result_display = result_display[:500] + "\n...[truncated]"
-                console.print(f"[bold magenta]Tool Result:[/bold magenta]\n{result_display}")
+                
+                if "Success: No errors or warnings" in result_display:
+                    console.print(f"[bold green]Tool Result:[/bold green]\n[green]{result_display}[/green]")
+                elif "Error" in result_display or "syntax error" in result_display:
+                    console.print(f"[bold red]Tool Result:[/bold red]\n[red]{result_display}[/red]")
+                else:
+                    console.print(f"[bold magenta]Tool Result:[/bold magenta]\n{result_display}")
                 
                 # Append tool result to messages
                 messages.append({
@@ -68,10 +78,26 @@ def run_review_agent(file_path: str, max_iter: int = 5):
         else:
             # If no tool calls and no more work needed, break
             console.print("[bold green]Agent has finished reviewing the file.[/bold green]")
+            final_status = "Success (Clean)"
             break
             
         iteration += 1
 
     if iteration > max_iter:
         console.print("[bold red]Reached maximum iterations without completion.[/bold red]")
+        final_status = "Failed (Max Iterations)"
+
+    # Print summary table
+    table = Table(title="RTL Code Review Summary", border_style="blue")
+    table.add_column("Metric", style="cyan", no_wrap=True)
+    table.add_column("Value", style="magenta")
+    
+    table.add_row("File Reviewed", file_path)
+    table.add_row("Total Iterations", str(min(iteration, max_iter)))
+    table.add_row("Tool Calls Made", str(tool_calls_count))
+    status_color = "green" if "Success" in final_status else "red"
+    table.add_row("Final Status", f"[{status_color}]{final_status}[/{status_color}]")
+    
+    console.print("\n")
+    console.print(table)
 

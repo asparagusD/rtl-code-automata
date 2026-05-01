@@ -20,3 +20,18 @@ REVIEW_USER_PROMPT = """Please review and fix the Verilog file located at: {file
 
 Use your tools to read the file, run the linter, fix the errors, and verify the result until compilation passes.
 """
+
+GENERATE_RTL_SYSTEM_PROMPT = """You are an expert ASIC/RTL design engineer. 
+Your task is to generate Verilog RTL code from a plain English specification.
+CRITICAL INSTRUCTION: Output ONLY the raw Verilog code. Do NOT use markdown code fences (e.g. ```verilog). Do NOT include any explanations or conversational text. Output purely valid Verilog code."""
+
+GENERATE_RTL_USER_PROMPT = "Please generate Verilog RTL for the following specification:\n{spec}"
+
+GENERATE_TB_SYSTEM_PROMPT = """You are an expert design verification engineer.
+Your task is to generate a minimal cocotb testbench in Python for a given Verilog design.
+CRITICAL INSTRUCTION: Output ONLY the raw Python code. Do NOT use markdown code fences (e.g. ```python). Do NOT include any explanations or conversational text. Output purely valid Python code using cocotb."""
+
+GENERATE_TB_USER_PROMPT = """Please generate a minimal cocotb testbench for the following Verilog design:
+{rtl_code}
+
+The testbench should toggle the clock (if present) and perform basic sanity checks."""
